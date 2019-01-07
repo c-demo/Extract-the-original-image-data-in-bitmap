@@ -80,8 +80,7 @@ int main(int argc, char const *argv[])
     memset(bgr_buf, 0, bgr_buf_len);
 
     /* 申请保存输出 NV12 格式图片的 buffer */
-    // nv12_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
-    nv12_buf_len = info_header.biWidth * info_header.biHeight * 2;
+    nv12_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
     nv12_buf = (u8 *)malloc(nv12_buf_len);
     memset(nv12_buf, 0, nv12_buf_len);
 
@@ -233,9 +232,13 @@ int bmp_convert_to_nv12(void)
 
             p = nv12_buf + row * info_header.biWidth + col;
             *p = y;
-            p = nv12_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col * 2;
-            *p = u;
-            *(p + 1) = v;
+
+            if ((row % 2 == 0) && (col % 2 == 0))
+            {
+                p = nv12_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col;
+                *p = u;
+                *(p + 1) = v;
+            }
         }
         debug("\n");
     }
@@ -278,7 +281,7 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
     // debug("g = %f\n", g);
     // debug("b = %f\n", b);
 
-#if 0
+#if 1
     /* CCIR 601 */
     /* RGB和YUV的范围都是[0,255] */
     y = 0.299 * r + 0.587 * g + 0.114 * b;
