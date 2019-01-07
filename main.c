@@ -14,6 +14,8 @@
 #define DWORD unsigned int
 #define LONG unsigned int
 
+#define u8 unsigned char
+
 typedef struct tagBITMAPFILEHEADER
 {
     WORD bfType;                            // 位图文件的类型，必须为BM(1-2字节)
@@ -41,6 +43,8 @@ typedef struct tagBITMAPINFOHEADER
 int parsing_main_arguments(int argc, char const *argv[]);
 int print_bmp_header(void);
 int parse_bmp_raw_data(void);
+int bmp_convert_to_nv12(void);
+int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov);
 
 char bmp_name[16];
 FILE *bmp_file = NULL;
@@ -48,7 +52,7 @@ FILE *bmp_file = NULL;
 BITMAPFILEHEADER file_header;
 BITMAPINFOHEADER info_header;
 
-unsigned char *bgr_buf = NULL;
+u8 *bgr_buf = NULL;
 unsigned int bgr_buf_len = 0;
 
 int main(int argc, char const *argv[])
@@ -56,6 +60,9 @@ int main(int argc, char const *argv[])
     parsing_main_arguments(argc, argv);
     print_bmp_header();
     parse_bmp_raw_data();
+    u8 y, u, v;
+    rgb_convert_to_yuv(0x00, 0x00, 0xFF, &y, &u, &v);
+    printf("y/u/v = %u/%u/%u\n", y, u, v);
 
     return 0;
 }
@@ -139,7 +146,7 @@ int parse_bmp_raw_data(void)
 
     /* 申请保存原始 bitmap BGR888 格式的 buffer */
     bgr_buf_len = info_header.biSizeImage;
-    bgr_buf = (unsigned char *)malloc(bgr_buf_len);
+    bgr_buf = (u8 *)malloc(bgr_buf_len);
     memset(bgr_buf, 0, bgr_buf_len);
 
     /* 读取 bitmap 原始图像数据 */
@@ -154,7 +161,7 @@ int parse_bmp_raw_data(void)
     debug(" 0x");
     for (i = 0; i < bgr_buf_len; i++)
     {
-        debug("%02x", (unsigned char)(*(bgr_buf + i)));
+        debug("%02x", (u8)(*(bgr_buf + i)));
 
         if (i % 12 == 11)
             debug("\n");
@@ -165,4 +172,49 @@ int parse_bmp_raw_data(void)
 #endif
 
     fclose(bmp_file);
+}
+
+int bmp_convert_to_nv12(void)
+{
+
+}
+
+int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
+{
+    float r, g, b;
+    float y, u, v;
+
+    r = (float)ir;
+    g = (float)ig;
+    b = (float)ib;
+    debug("------------------------------------------------\n");
+    debug(" RGB convert to YUV\n");
+    debug("------------------------------------------------\n");
+    debug("r = %f\n", r);
+    debug("g = %f\n", g);
+    debug("b = %f\n", b);
+
+#if 0
+    /* CCIR 601 */
+    /* RGB和YUV的范围都是[0,255] */
+    y = 0.299 * r + 0.587 * g + 0.114 * b;
+    u = 0.500 * r - 0.419 * g - 0.081 * b + 128;
+    v = -0.169 * r - 0.331 * g + 0.500 * b + 128;
+#else
+    /* ISBN 1-878707-09-4 */
+    /* RGB的范围是[0,255], Y的范围是[16,235], UV的范围是[16,239] */
+    y = 0.257 * r + 0.504 * g + 0.098 * b + 16;
+    u = 0.439 * r - 0.368 * g - 0.071 * b + 128;
+    v = -0.148 * r - 0.291 * g + 0.439 * b + 128;
+#endif
+
+    /* float 类型强转为整形，做四舍五入转化的话，原本是要加 0.5 的 */
+    /* 但是由于 FF 的颜色值，计算到的 YUV 分量的值为 255.5, 再加 0.5 后数据会溢出 */
+    /* 因此这里迫不得已加 0.4999 将就一下 */
+    *oy = (u8)(y + 0.4999);
+    *ou = (u8)(u + 0.4999);
+    *ov = (u8)(v + 0.4999);
+    debug("y = 0x%x(h), %d(d), %f(f)\n", *oy, *oy, y);
+    debug("u = 0x%x(h), %d(d), %f(f)\n", *ou, *ou, u);
+    debug("v = 0x%x(h), %d(d), %f(f)\n", *ov, *ov, v);
 }
