@@ -41,12 +41,14 @@ typedef struct tagBITMAPINFOHEADER
 } __attribute__((packed)) BITMAPINFOHEADER;
 
 int parsing_main_arguments(int argc, char const *argv[]);
-int print_bmp_header(void);
+int parse_bmp_header(void);
 int parse_bmp_raw_data(void);
 int bmp_convert_to_nv12(void);
 int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov);
+int generate_yuv420_image(void);
 
 char bmp_name[16];
+char nv12_name[16];
 FILE *bmp_file = NULL;
 FILE *nv12_file = NULL;
 
@@ -54,14 +56,41 @@ BITMAPFILEHEADER file_header;
 BITMAPINFOHEADER info_header;
 
 u8 *bgr_buf = NULL;
+u8 *nv12_buf = NULL;
 unsigned int bgr_buf_len = 0;
+unsigned int nv12_buf_len = 0;
 
 int main(int argc, char const *argv[])
 {
-    parsing_main_arguments(argc, argv);
-    print_bmp_header();
+    int ret = 0;
+
+    ret = parsing_main_arguments(argc, argv);
+    if (ret != 0)
+    {
+        printf("parsing_main_arguments failed\n");
+        printf("\n");
+        return -1;
+    }
+
+    parse_bmp_header();
+
+    /* 申请保存原始 bitmap BGR888 格式的 buffer */
+    bgr_buf_len = info_header.biSizeImage;
+    bgr_buf = (u8 *)malloc(bgr_buf_len);
+    memset(bgr_buf, 0, bgr_buf_len);
+
+    /* 申请保存输出 NV12 格式图片的 buffer */
+    // nv12_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
+    nv12_buf_len = info_header.biWidth * info_header.biHeight * 2;
+    nv12_buf = (u8 *)malloc(nv12_buf_len);
+    memset(nv12_buf, 0, nv12_buf_len);
+
     parse_bmp_raw_data();
     bmp_convert_to_nv12();
+    generate_yuv420_image();
+
+    free(bgr_buf);
+    free(nv12_buf);
     return 0;
 }
 
@@ -71,23 +100,27 @@ int main(int argc, char const *argv[])
 int parsing_main_arguments(int argc, char const *argv[])
 {
     /* 打印函数使用方法 */
-    if (argc != 2)
+    if (argc != 3)
     {
-        printf("usage: ./app xxx.bmp\n");
-        printf("eg   : ./app demo.bmp\n");
+        printf("usage: ./app xxx.bmp xxx.nv12\n");
+        printf("eg   : ./app demo.bmp demo.nv12\n");
         printf("\n");
         return -1;
     }
 
     strcpy(bmp_name, argv[1]);
-    debug("bmp_name = %s\n", bmp_name);
+    strcpy(nv12_name, argv[2]);
+
+    debug("bmp_name  = %s\n", bmp_name);
+    debug("nv12_name = %s\n", nv12_name);
+
     return 0;
 }
 
 /**
  * @Description 打印 BITMAP 图像信息
  */
-int print_bmp_header(void)
+int parse_bmp_header(void)
 {
     bmp_file = fopen(bmp_name, "r");
     if (bmp_file == NULL)
@@ -143,11 +176,6 @@ int parse_bmp_raw_data(void)
 {
     int i;
 
-    /* 申请保存原始 bitmap BGR888 格式的 buffer */
-    bgr_buf_len = info_header.biSizeImage;
-    bgr_buf = (u8 *)malloc(bgr_buf_len);
-    memset(bgr_buf, 0, bgr_buf_len);
-
     /* 读取 bitmap 原始图像数据 */
     bmp_file = fopen(bmp_name, "r");
     fseek(bmp_file, file_header.bfOffBits, SEEK_SET);
@@ -174,6 +202,9 @@ int parse_bmp_raw_data(void)
     return 0;
 }
 
+/**
+ * @Description 将 bitmap 的图像转化为 nv12 的图像
+ */
 int bmp_convert_to_nv12(void)
 {
     u8 r, g, b;
@@ -196,15 +227,42 @@ int bmp_convert_to_nv12(void)
             b = *p;
             g = *(p + 1);
             r = *(p + 2);
-            // rgb_convert_to_yuv(r, g, b, &y, &u, &v);
             debug(" 0x%02x%02x%02x", r, g, b);
+
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+
+            p = nv12_buf + row * info_header.biWidth + col;
+            *p = y;
+            p = nv12_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col * 2;
+            *p = u;
+            *(p + 1) = v;
         }
         debug("\n");
     }
+    debug("\n");
+
+#if defined(DEBUG)
+    debug("------------------------------------------------\n");
+    debug(" NV12 raw data\n");
+    debug("------------------------------------------------\n");
+    for (row = 0; row < info_header.biHeight * 3 / 2; row++)
+    {
+        for (col = 0; col < info_header.biWidth; col++)
+        {
+            p = nv12_buf + row * info_header.biWidth + col;
+            debug(" 0x%02x", *p);
+        }
+        debug("\n");
+    }
+    debug("\n");
+#endif
 
     return 0;
 }
 
+/**
+ * @Description 将输入的 rgb 值转化为对应的 yuv 值
+ */
 int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
 {
     float r, g, b;
@@ -213,12 +271,12 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
     r = (float)ir;
     g = (float)ig;
     b = (float)ib;
-    debug("------------------------------------------------\n");
-    debug(" RGB convert to YUV\n");
-    debug("------------------------------------------------\n");
-    debug("r = %f\n", r);
-    debug("g = %f\n", g);
-    debug("b = %f\n", b);
+    // debug("------------------------------------------------\n");
+    // debug(" RGB convert to YUV\n");
+    // debug("------------------------------------------------\n");
+    // debug("r = %f\n", r);
+    // debug("g = %f\n", g);
+    // debug("b = %f\n", b);
 
 #if 0
     /* CCIR 601 */
@@ -240,9 +298,27 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
     *oy = (u8)(y + 0.4999);
     *ou = (u8)(u + 0.4999);
     *ov = (u8)(v + 0.4999);
-    debug("y = 0x%x(h), %d(d), %f(f)\n", *oy, *oy, y);
-    debug("u = 0x%x(h), %d(d), %f(f)\n", *ou, *ou, u);
-    debug("v = 0x%x(h), %d(d), %f(f)\n", *ov, *ov, v);
+    // debug("y = 0x%x(h), %d(d), %f(f)\n", *oy, *oy, y);
+    // debug("u = 0x%x(h), %d(d), %f(f)\n", *ou, *ou, u);
+    // debug("v = 0x%x(h), %d(d), %f(f)\n", *ov, *ov, v);
+
+    return 0;
+}
+
+/**
+ * @Description 生成一个 nv12 图片
+ */
+int generate_yuv420_image(void)
+{
+    nv12_file = fopen(nv12_name, "wb");
+    if (nv12_file == NULL)
+    {
+        printf("err: can not open %s file\n", nv12_name);
+        return -1;
+    }
+
+    fwrite(nv12_buf, 1, nv12_buf_len, nv12_file);
+    fclose(nv12_file);
 
     return 0;
 }
