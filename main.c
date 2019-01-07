@@ -48,6 +48,7 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov);
 
 char bmp_name[16];
 FILE *bmp_file = NULL;
+FILE *nv12_file = NULL;
 
 BITMAPFILEHEADER file_header;
 BITMAPINFOHEADER info_header;
@@ -60,10 +61,7 @@ int main(int argc, char const *argv[])
     parsing_main_arguments(argc, argv);
     print_bmp_header();
     parse_bmp_raw_data();
-    u8 y, u, v;
-    rgb_convert_to_yuv(0x00, 0x00, 0xFF, &y, &u, &v);
-    printf("y/u/v = %u/%u/%u\n", y, u, v);
-
+    bmp_convert_to_nv12();
     return 0;
 }
 
@@ -83,6 +81,7 @@ int parsing_main_arguments(int argc, char const *argv[])
 
     strcpy(bmp_name, argv[1]);
     debug("bmp_name = %s\n", bmp_name);
+    return 0;
 }
 
 /**
@@ -154,7 +153,7 @@ int parse_bmp_raw_data(void)
     fseek(bmp_file, file_header.bfOffBits, SEEK_SET);
     fread(bgr_buf, 1, bgr_buf_len, bmp_file);
 
-#ifdef DEBUG
+#if defined(DEBUG)
     debug("------------------------------------------------\n");
     debug(" BITMAP RAW DATA\n");
     debug("------------------------------------------------\n");
@@ -172,11 +171,38 @@ int parse_bmp_raw_data(void)
 #endif
 
     fclose(bmp_file);
+    return 0;
 }
 
 int bmp_convert_to_nv12(void)
 {
+    u8 r, g, b;
+    u8 y, u, v;
+    u8 *p = NULL;
+    int row;                                     // 行计数
+    int col;                                     // 列计数
+    int pixel_size = info_header.biBitCount / 8; // 每个像素占据的字节数
 
+    debug("pixel_size = %d\n", pixel_size);
+    debug("------------------------------------------------\n");
+    debug(" RGB raw data\n");
+    debug("------------------------------------------------\n");
+
+    for (row = 0; row < info_header.biHeight; row++)
+    {
+        for (col = 0; col < info_header.biWidth; col++)
+        {
+            p = bgr_buf + (info_header.biHeight - row - 1) * info_header.biWidth * pixel_size + col * pixel_size;
+            b = *p;
+            g = *(p + 1);
+            r = *(p + 2);
+            // rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            debug(" 0x%02x%02x%02x", r, g, b);
+        }
+        debug("\n");
+    }
+
+    return 0;
 }
 
 int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
@@ -217,4 +243,6 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
     debug("y = 0x%x(h), %d(d), %f(f)\n", *oy, *oy, y);
     debug("u = 0x%x(h), %d(d), %f(f)\n", *ou, *ou, u);
     debug("v = 0x%x(h), %d(d), %f(f)\n", *ov, *ov, v);
+
+    return 0;
 }
