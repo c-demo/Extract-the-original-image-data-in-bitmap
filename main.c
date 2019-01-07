@@ -95,6 +95,8 @@ int print_bmp_header(void)
     debug("sizeof(LONG) = %lu\n", sizeof(LONG));
     debug("sizeof(BITMAPFILEHEADER) = %lu\n", sizeof(BITMAPFILEHEADER));
     debug("sizeof(BITMAPINFOHEADER) = %lu\n", sizeof(BITMAPINFOHEADER));
+    debug("\n");
+
     fread(&file_header, 1, sizeof(BITMAPFILEHEADER), bmp_file);
     fread(&info_header, 1, sizeof(BITMAPINFOHEADER), bmp_file);
     fclose(bmp_file);
@@ -102,32 +104,35 @@ int print_bmp_header(void)
     debug("------------------------------------------------\n");
     debug(" BITMAP FILE HEADER\n");
     debug("------------------------------------------------\n");
-    debug("[%lu] file_header.bfType          = 0x%x, %u\n", sizeof(file_header.bfType), file_header.bfType, file_header.bfType);
-    debug("[%lu] file_header.bfSize          = 0x%x, %u\n", sizeof(file_header.bfSize), file_header.bfSize, file_header.bfSize);
-    debug("[%lu] file_header.bfReserved1     = 0x%x, %u\n", sizeof(file_header.bfReserved1), file_header.bfReserved1, file_header.bfReserved1);
-    debug("[%lu] file_header.bfReserved2     = 0x%x, %u\n", sizeof(file_header.bfReserved2), file_header.bfReserved2, file_header.bfReserved2);
-    debug("[%lu] file_header.bfOffBits       = 0x%x, %u\n", sizeof(file_header.bfOffBits), file_header.bfOffBits, file_header.bfOffBits);
+    debug("[%lu] file_header.bfType          = 0x%04x,     %u\n", sizeof(file_header.bfType), file_header.bfType, file_header.bfType);
+    debug("[%lu] file_header.bfSize          = 0x%08x, %u\n", sizeof(file_header.bfSize), file_header.bfSize, file_header.bfSize);
+    debug("[%lu] file_header.bfReserved1     = 0x%04x,     %u\n", sizeof(file_header.bfReserved1), file_header.bfReserved1, file_header.bfReserved1);
+    debug("[%lu] file_header.bfReserved2     = 0x%04x,     %u\n", sizeof(file_header.bfReserved2), file_header.bfReserved2, file_header.bfReserved2);
+    debug("[%lu] file_header.bfOffBits       = 0x%08x, %u\n", sizeof(file_header.bfOffBits), file_header.bfOffBits, file_header.bfOffBits);
     debug("\n");
 
     debug("------------------------------------------------\n");
     debug(" BITMAP INFO HEADER\n");
     debug("------------------------------------------------\n");
-    debug("[%lu] info_header.biSize          = 0x%x, %u\n", sizeof(info_header.biSize), info_header.biSize, info_header.biSize);
-    debug("[%lu] info_header.biWidth         = 0x%x, %u\n", sizeof(info_header.biWidth), info_header.biWidth, info_header.biWidth);
-    debug("[%lu] info_header.biHeight        = 0x%x, %u\n", sizeof(info_header.biHeight), info_header.biHeight, info_header.biHeight);
-    debug("[%lu] info_header.biPlanes        = 0x%x, %u\n", sizeof(info_header.biPlanes), info_header.biPlanes, info_header.biPlanes);
-    debug("[%lu] info_header.biBitCount      = 0x%x, %u\n", sizeof(info_header.biBitCount), info_header.biBitCount, info_header.biBitCount);
-    debug("[%lu] info_header.biCompression   = 0x%x, %u\n", sizeof(info_header.biCompression), info_header.biCompression, info_header.biCompression);
-    debug("[%lu] info_header.biSizeImage     = 0x%x, %u\n", sizeof(info_header.biSizeImage), info_header.biSizeImage, info_header.biSizeImage);
-    debug("[%lu] info_header.biXPelsPerMeter = 0x%x, %u\n", sizeof(info_header.biXPelsPerMeter), info_header.biXPelsPerMeter, info_header.biXPelsPerMeter);
-    debug("[%lu] info_header.biYPelsPerMeter = 0x%x, %u\n", sizeof(info_header.biYPelsPerMeter), info_header.biYPelsPerMeter, info_header.biYPelsPerMeter);
-    debug("[%lu] info_header.biClrUsed       = 0x%x, %u\n", sizeof(info_header.biClrUsed), info_header.biClrUsed, info_header.biClrUsed);
-    debug("[%lu] info_header.biClrImportant  = 0x%x, %u\n", sizeof(info_header.biClrImportant), info_header.biClrImportant, info_header.biClrImportant);
+    debug("[%lu] info_header.biSize          = 0x%08x, %u\n", sizeof(info_header.biSize), info_header.biSize, info_header.biSize);
+    debug("[%lu] info_header.biWidth         = 0x%08x, %u\n", sizeof(info_header.biWidth), info_header.biWidth, info_header.biWidth);
+    debug("[%lu] info_header.biHeight        = 0x%08x, %u\n", sizeof(info_header.biHeight), info_header.biHeight, info_header.biHeight);
+    debug("[%lu] info_header.biPlanes        = 0x%04x,     %u\n", sizeof(info_header.biPlanes), info_header.biPlanes, info_header.biPlanes);
+    debug("[%lu] info_header.biBitCount      = 0x%04x,     %u\n", sizeof(info_header.biBitCount), info_header.biBitCount, info_header.biBitCount);
+    debug("[%lu] info_header.biCompression   = 0x%08x, %u\n", sizeof(info_header.biCompression), info_header.biCompression, info_header.biCompression);
+    debug("[%lu] info_header.biSizeImage     = 0x%08x, %u\n", sizeof(info_header.biSizeImage), info_header.biSizeImage, info_header.biSizeImage);
+    debug("[%lu] info_header.biXPelsPerMeter = 0x%08x, %u\n", sizeof(info_header.biXPelsPerMeter), info_header.biXPelsPerMeter, info_header.biXPelsPerMeter);
+    debug("[%lu] info_header.biYPelsPerMeter = 0x%08x, %u\n", sizeof(info_header.biYPelsPerMeter), info_header.biYPelsPerMeter, info_header.biYPelsPerMeter);
+    debug("[%lu] info_header.biClrUsed       = 0x%08x, %u\n", sizeof(info_header.biClrUsed), info_header.biClrUsed, info_header.biClrUsed);
+    debug("[%lu] info_header.biClrImportant  = 0x%08x, %u\n", sizeof(info_header.biClrImportant), info_header.biClrImportant, info_header.biClrImportant);
     debug("\n");
 
     return 0;
 }
 
+/**
+ * @Description 从 BITMAP 图像中提取出图像原始数据
+ */
 int parse_bmp_raw_data(void)
 {
     int i;
@@ -142,6 +147,10 @@ int parse_bmp_raw_data(void)
     fseek(bmp_file, file_header.bfOffBits, SEEK_SET);
     fread(bgr_buf, 1, bgr_buf_len, bmp_file);
 
+#ifdef DEBUG
+    debug("------------------------------------------------\n");
+    debug(" BITMAP RAW DATA\n");
+    debug("------------------------------------------------\n");
     debug(" 0x");
     for (i = 0; i < bgr_buf_len; i++)
     {
@@ -153,6 +162,7 @@ int parse_bmp_raw_data(void)
             debug(" 0x");
     }
     debug("\n");
+#endif
 
     fclose(bmp_file);
 }
