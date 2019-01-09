@@ -8,6 +8,6 @@
 
     user@ubuntu:~/work/c-study/Extract-the-original-image-data-in-bitmap$ make
     gcc -o app main.c
-    user@ubuntu:~/work/c-study/Extract-the-original-image-data-in-bitmap$ ./app demo.bmp out.nv12
+    user@ubuntu:~/work/c-study/Extract-the-original-image-data-in-bitmap$ ./app logo.bmp logo.argb
 
 
