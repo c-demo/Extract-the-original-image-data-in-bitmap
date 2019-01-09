@@ -48,17 +48,17 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov);
 int generate_yuv420_image(void);
 
 char bmp_name[16];
-char nv12_name[16];
+char out_name[16];
 FILE *bmp_file = NULL;
-FILE *nv12_file = NULL;
+FILE *out_file = NULL;
 
 BITMAPFILEHEADER file_header;
 BITMAPINFOHEADER info_header;
 
 u8 *bgr_buf = NULL;
-u8 *nv12_buf = NULL;
+u8 *out_buf = NULL;
 unsigned int bgr_buf_len = 0;
-unsigned int nv12_buf_len = 0;
+unsigned int out_buf_len = 0;
 
 int main(int argc, char const *argv[])
 {
@@ -79,17 +79,17 @@ int main(int argc, char const *argv[])
     bgr_buf = (u8 *)malloc(bgr_buf_len);
     memset(bgr_buf, 0, bgr_buf_len);
 
-    /* 申请保存输出 NV12 格式图片的 buffer */
-    nv12_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
-    nv12_buf = (u8 *)malloc(nv12_buf_len);
-    memset(nv12_buf, 0, nv12_buf_len);
+    /* 申请保存输出输出图片的 buffer */
+    out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
+    out_buf = (u8 *)malloc(out_buf_len);
+    memset(out_buf, 0, out_buf_len);
 
     parse_bmp_raw_data();
     bmp_convert_to_nv12();
     generate_yuv420_image();
 
     free(bgr_buf);
-    free(nv12_buf);
+    free(out_buf);
     return 0;
 }
 
@@ -101,17 +101,17 @@ int parsing_main_arguments(int argc, char const *argv[])
     /* 打印函数使用方法 */
     if (argc != 3)
     {
-        printf("usage: ./app xxx.bmp xxx.nv12\n");
+        printf("usage: ./app xxx.bmp output.img\n");
         printf("eg   : ./app demo.bmp demo.nv12\n");
         printf("\n");
         return -1;
     }
 
     strcpy(bmp_name, argv[1]);
-    strcpy(nv12_name, argv[2]);
+    strcpy(out_name, argv[2]);
 
     debug("bmp_name  = %s\n", bmp_name);
-    debug("nv12_name = %s\n", nv12_name);
+    debug("out_name = %s\n", out_name);
 
     return 0;
 }
@@ -230,12 +230,12 @@ int bmp_convert_to_nv12(void)
 
             rgb_convert_to_yuv(r, g, b, &y, &u, &v);
 
-            p = nv12_buf + row * info_header.biWidth + col;
+            p = out_buf + row * info_header.biWidth + col;
             *p = y;
 
             if ((row % 2 == 0) && (col % 2 == 0))
             {
-                p = nv12_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col;
+                p = out_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col;
                 *p = u;
                 *(p + 1) = v;
             }
@@ -252,7 +252,7 @@ int bmp_convert_to_nv12(void)
     {
         for (col = 0; col < info_header.biWidth; col++)
         {
-            p = nv12_buf + row * info_header.biWidth + col;
+            p = out_buf + row * info_header.biWidth + col;
             debug(" 0x%02x", *p);
         }
         debug("\n");
@@ -313,15 +313,15 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
  */
 int generate_yuv420_image(void)
 {
-    nv12_file = fopen(nv12_name, "wb");
-    if (nv12_file == NULL)
+    out_file = fopen(out_name, "wb");
+    if (out_file == NULL)
     {
-        printf("err: can not open %s file\n", nv12_name);
+        printf("err: can not open %s file\n", out_name);
         return -1;
     }
 
-    fwrite(nv12_buf, 1, nv12_buf_len, nv12_file);
-    fclose(nv12_file);
+    fwrite(out_buf, 1, out_buf_len, out_file);
+    fclose(out_file);
 
     return 0;
 }
