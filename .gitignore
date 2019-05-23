@@ -1,0 +1,10 @@
+a.out
+app
+
+*.bmp
+
+*.nv12
+*.nv21
+*.nv16
+*.argb
+*.argb8888
