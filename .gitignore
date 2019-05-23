@@ -3,6 +3,8 @@ app
 
 *.bmp
 
+*.i420
+*.yv12
 *.nv12
 *.nv21
 *.yuyv
