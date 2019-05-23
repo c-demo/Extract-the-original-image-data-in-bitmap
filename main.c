@@ -4,8 +4,9 @@
 
 // #define DEBUG
 
+// default format is NV12 format
 // #define FMT_I420         // YYYYYYYYUUVV
-#define FMT_YV12         // YYYYYYYYVVUU
+// #define FMT_YV12         // YYYYYYYYVVUU
 // #define FMT_NV12         // YYYYYYYYUVUV
 // #define FMT_NV21         // YYYYYYYYVUVU
 // #define FMT_YUYV         // YUYVYUYVYUYVYUYV
@@ -25,7 +26,7 @@
 #define DWORD unsigned int
 #define LONG unsigned int
 
-#define u8 unsigned char
+#define uint8_t unsigned char
 
 typedef struct tagBITMAPFILEHEADER
 {
@@ -55,7 +56,7 @@ int parsing_main_arguments(int argc, char const *argv[]);
 int parse_bmp_header(void);
 int parse_bmp_raw_data(void);
 int bmp_convert_to_nv12(void);
-int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov);
+int rgb_convert_to_yuv(uint8_t ir, uint8_t ig, uint8_t ib, uint8_t *oy, uint8_t *ou, uint8_t *ov);
 int generate_yuv420_image(void);
 
 char bmp_name[16];
@@ -66,8 +67,8 @@ FILE *out_file = NULL;
 BITMAPFILEHEADER file_header;
 BITMAPINFOHEADER info_header;
 
-u8 *bgr_buf = NULL;
-u8 *out_buf = NULL;
+uint8_t *bgr_buf = NULL;
+uint8_t *out_buf = NULL;
 unsigned int bgr_buf_len = 0;
 unsigned int out_buf_len = 0;
 
@@ -87,7 +88,7 @@ int main(int argc, char const *argv[])
 
     /* 申请保存原始 bitmap BGR888 格式的 buffer */
     bgr_buf_len = info_header.biSizeImage;
-    bgr_buf = (u8 *)malloc(bgr_buf_len);
+    bgr_buf = (uint8_t *)malloc(bgr_buf_len);
     memset(bgr_buf, 0, bgr_buf_len);
 
     /* 申请保存输出输出图片的 buffer */
@@ -114,7 +115,7 @@ int main(int argc, char const *argv[])
 #else
     out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
 #endif
-    out_buf = (u8 *)malloc(out_buf_len);
+    out_buf = (uint8_t *)malloc(out_buf_len);
     memset(out_buf, 0, out_buf_len);
 
     parse_bmp_raw_data();
@@ -220,7 +221,7 @@ int parse_bmp_raw_data(void)
     debug(" 0x");
     for (i = 0; i < bgr_buf_len; i++)
     {
-        debug("%02x", (u8)(*(bgr_buf + i)));
+        debug("%02x", (uint8_t)(*(bgr_buf + i)));
 
         if (i % 12 == 11)
             debug("\n");
@@ -239,9 +240,9 @@ int parse_bmp_raw_data(void)
  */
 int bmp_convert_to_nv12(void)
 {
-    u8 r, g, b;
-    u8 y, u, v;
-    u8 *p = NULL;
+    uint8_t r, g, b;
+    uint8_t y, u, v;
+    uint8_t *p = NULL;
     int row;                                     // 行计数
     int col;                                     // 列计数
     int pixel_size = info_header.biBitCount / 8; // 每个像素占据的字节数
@@ -392,7 +393,7 @@ int bmp_convert_to_nv12(void)
 /**
  * @Description 将输入的 rgb 值转化为对应的 yuv 值
  */
-int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
+int rgb_convert_to_yuv(uint8_t ir, uint8_t ig, uint8_t ib, uint8_t *oy, uint8_t *ou, uint8_t *ov)
 {
     float r, g, b;
     float y, u, v;
@@ -424,9 +425,9 @@ int rgb_convert_to_yuv(u8 ir, u8 ig, u8 ib, u8 *oy, u8 *ou, u8 *ov)
     /* float 类型强转为整形，做四舍五入转化的话，原本是要加 0.5 的 */
     /* 但是由于 FF 的颜色值，计算到的 YUV 分量的值为 255.5, 再加 0.5 后数据会溢出 */
     /* 因此这里迫不得已加 0.4999 将就一下 */
-    *oy = (u8)(y + 0.4999);
-    *ou = (u8)(u + 0.4999);
-    *ov = (u8)(v + 0.4999);
+    *oy = (uint8_t)(y + 0.4999);
+    *ou = (uint8_t)(u + 0.4999);
+    *ov = (uint8_t)(v + 0.4999);
     // debug("y = 0x%x(h), %d(d), %f(f)\n", *oy, *oy, y);
     // debug("u = 0x%x(h), %d(d), %f(f)\n", *ou, *ou, u);
     // debug("v = 0x%x(h), %d(d), %f(f)\n", *ov, *ov, v);
