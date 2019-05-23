@@ -3,7 +3,11 @@
 #include <stdlib.h>
 
 // #define DEBUG
-#define FMT_ARGB8888
+
+// #define FMT_NV12         // YYYYYYYYUVUV
+// #define FMT_NV21         // YYYYYYYYVUVU
+// #define FMT_NV16         // YYYYYYYYUVUVUVUV
+// #define FMT_ARGB8888     // ARGBARGBARGBARGBARGBARGBARGBARGB
 
 #if defined(DEBUG)
 #define debug printf
@@ -81,7 +85,13 @@ int main(int argc, char const *argv[])
     memset(bgr_buf, 0, bgr_buf_len);
 
     /* 申请保存输出输出图片的 buffer */
-#if defined(FMT_ARGB8888)
+#if defined(FMT_NV12)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
+#elif defined(FMT_NV21)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
+#elif defined(FMT_NV16)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 2;
+#elif defined(FMT_ARGB8888)
     out_buf_len = info_header.biWidth * info_header.biHeight * 4;
 #else
     out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
@@ -232,8 +242,37 @@ int bmp_convert_to_nv12(void)
             g = *(p + 1);
             r = *(p + 2);
             debug(" 0x%02x%02x%02x", r, g, b);
-
-#if defined(FMT_ARGB8888)
+#if defined(FMT_NV12)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth + col;
+            *p = y;
+            if ((row % 2 == 0) && (col % 2 == 0))
+            {
+                p = out_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col;
+                *p = u;
+                *(p + 1) = v;
+            }
+#elif defined(FMT_NV21)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth + col;
+            *p = y;
+            if ((row % 2 == 0) && (col % 2 == 0))
+            {
+                p = out_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col;
+                *p = v;
+                *(p + 1) = u;
+            }
+#elif defined(FMT_NV16)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth + col;
+            *p = y;
+            if (col % 2 == 0)
+            {
+                p = out_buf + info_header.biWidth * info_header.biHeight + row * info_header.biWidth + col;
+                *p = u;
+                *(p + 1) = v;
+            }
+#elif defined(FMT_ARGB8888)
             p = out_buf + row * info_header.biWidth * 4 + col * 4;
             *p = 0xFF;
             *(p + 1) = r;
