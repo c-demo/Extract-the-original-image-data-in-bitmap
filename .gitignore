@@ -5,6 +5,11 @@ app
 
 *.nv12
 *.nv21
+*.yuyv
+*.yvyu
+*.uyvy
+*.vyuy
 *.nv16
 *.argb
 *.argb8888
+

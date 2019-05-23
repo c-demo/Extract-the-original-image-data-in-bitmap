@@ -6,6 +6,10 @@
 
 // #define FMT_NV12         // YYYYYYYYUVUV
 // #define FMT_NV21         // YYYYYYYYVUVU
+// #define FMT_YUYV         // YUYVYUYVYUYVYUYV
+// #define FMT_YVYU         // YVYUYVYUYVYUYVYU
+// #define FMT_UYVY         // UYVYUYVYUYVYUYVY
+// #define FMT_VYUY         // VYUYVYUYVYUYVYUY
 // #define FMT_NV16         // YYYYYYYYUVUVUVUV
 // #define FMT_ARGB8888     // ARGBARGBARGBARGBARGBARGBARGBARGB
 
@@ -89,6 +93,14 @@ int main(int argc, char const *argv[])
     out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
 #elif defined(FMT_NV21)
     out_buf_len = info_header.biWidth * info_header.biHeight * 3 / 2;
+#elif defined(FMT_YUYV)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 2;
+#elif defined(FMT_YVYU)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 2;
+#elif defined(FMT_UYVY)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 2;
+#elif defined(FMT_VYUY)
+    out_buf_len = info_header.biWidth * info_header.biHeight * 2;
 #elif defined(FMT_NV16)
     out_buf_len = info_header.biWidth * info_header.biHeight * 2;
 #elif defined(FMT_ARGB8888)
@@ -261,6 +273,42 @@ int bmp_convert_to_nv12(void)
                 p = out_buf + info_header.biWidth * info_header.biHeight + (row / 2) * info_header.biWidth + col;
                 *p = v;
                 *(p + 1) = u;
+            }
+#elif defined(FMT_YUYV)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth * 2 + col * 2;
+            *p = y;
+            if (col % 2 == 0)
+            {
+                *(p + 1) = u;
+                *(p + 3) = v;
+            }
+#elif defined(FMT_YVYU)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth * 2 + col * 2;
+            *p = y;
+            if (col % 2 == 0)
+            {
+                *(p + 1) = v;
+                *(p + 3) = u;
+            }
+#elif defined(FMT_UYVY)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth * 2 + col * 2;
+            *(p + 1) = y;
+            if (col % 2 == 0)
+            {
+                *(p) = u;
+                *(p + 2) = v;
+            }
+#elif defined(FMT_VYUY)
+            rgb_convert_to_yuv(r, g, b, &y, &u, &v);
+            p = out_buf + row * info_header.biWidth * 2 + col * 2;
+            *(p + 1) = y;
+            if (col % 2 == 0)
+            {
+                *(p) = v;
+                *(p + 2) = u;
             }
 #elif defined(FMT_NV16)
             rgb_convert_to_yuv(r, g, b, &y, &u, &v);
